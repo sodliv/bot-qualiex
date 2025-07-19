@@ -1,0 +1,178 @@
+# === IMPORTS ESSENCIAIS ===
+import time
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+
+# === CONFIGURAÇÕES DO CHROME PARA COLAB ===
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # Roda sem abrir janela
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+chrome_options.binary_location = "/usr/bin/google-chrome"
+
+# === INICIAR O DRIVER ===
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
+# === DADOS DE LOGIN (SUBSTITUIR PELOS REAIS QUANDO TESTAR) ===
+# The authorization URL might not be the direct login page.
+# Let's try navigating to the base login URL first.
+url_base_login = "https://login.qualiex.com/" # Assuming this is the actual login page URL
+# url_login = "https://login.qualiex.com/oauth2/authorize?client_id=132fd610-1947-4827-8414-47b07b355c45&redirect_uri=https:%2F%2Fapps3.qualiex.com%2Fcallback&response_type=token%20id_token&scope=openid%20profile%20email&state=Lw%3D%3D" # Keep the original URL commented
+email = "smlima@bundyrefrigeration.com"
+senha = "123@S0l0nqua"
+
+# === ACESSO AO SISTEMA ===
+print("Acessando o sistema...")
+driver.get(url_base_login) # Navigate to the base login URL first
+
+# Wait for the email field to be present on the login page
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "email")))
+print ("Sistema acessado... Seguindo para Login...")
+
+# === LOGIN ===
+print("Fazendo login...")
+driver.find_element(By.NAME, "email").send_keys(email)
+print ("Email Colocado...")
+# 2. Clica no botão "Próximo" após o e-mail
+botao_next = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Next') or contains(., 'Próximo') or @type='submit']"))
+)
+botao_next.click()
+print("Email inserido e botão 'Next' clicado. Seguindo para a senha...")
+
+# Wait for the password field
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "password")))
+driver.find_element(By.NAME, "password").send_keys(senha)
+print ("Senha também inserida!")
+# 2. Faz o Sign In após colocar a senha
+botao_singin = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Sign In') or @type='submit']"))
+)
+botao_singin.click()
+print("Login realizado com sucesso! Conta", email, "acessada com sucesso.")
+
+time.sleep(10) # Esperar tempinho pq a internet é lenta
+
+# Now navigate to the staff area after successful login
+print("Indo para área Staff...")
+driver.get("https://apps1.qualiex.com/staff")
+time.sleep(10)
+
+# === CARREGAR PLANILHA COM COLABORADORES ===
+print("Carregando dados da planilha...")
+df = pd.DataFrame({
+    "Colaborador": [
+        "Ademir Mendes Nogueira",
+        "Adenilson Carlos Moraes Vieira",
+        "Adriana Shimada Ferreira"
+    ],
+    "Funcao": [
+        "Analista da Qualidade Senior",
+        "Operador Multifuncional Pleno",
+        "Lider de Celula de Producao"
+    ]
+})
+
+# === PROCESSO DE EDIÇÃO DE CADA COLABORADOR ===
+for index, row in df.iterrows():
+    nome = row['Colaborador']
+    funcao = row['Funcao']
+
+    print(f"\nBuscando: {nome}")
+
+    # Buscar o colaborador
+    try:
+        # 1. Campo de busca
+        print("→ Verificando campo de busca...")
+        campo_busca = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "txtSearch-inputEl"))
+        )
+        print("✔ Campo de busca encontrado")
+        campo_busca.clear()
+        campo_busca.send_keys(nome)
+        print(f"✔ Nome '{nome}' digitado")
+
+        # 2. Botão lupa
+        print("→ Aguardando botão de busca (lupa)...")
+        botao_lupa = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "#btnSearch"))
+        )
+        print("✔ Botão de busca encontrado")
+        botao_lupa.click()
+        print(f"✔ Botão clicado, buscando perfil de '{nome}'")
+
+        time.sleep(5)
+
+    except Exception as e:
+        print(f"❌ Erro ao buscar o colaborador '{nome}': {e}")
+        continue
+
+
+
+    # Clicar no resultado
+    try:
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f"//div[contains(text(), '{nome}')]")))
+        resultado = driver.find_element(By.XPATH, f"//div[contains(text(), '{nome}')]")
+        resultado.click()
+
+        print(f"Abrindo perfil de {nome}")
+
+        time.sleep(2)  # espera o perfil carregar (ajuste se precisar)
+
+        # Captura o HTML da página inteira
+        html = driver.page_source
+
+        # Procura pela palavra "Cargo" no HTML
+        idx = html.find("Cargo")
+
+        # Mostra o HTML próximo de onde encontrou
+        print(html[idx:idx+500])
+
+    except:
+        print(f"❌ Colaborador '{nome}' não encontrado!")
+        continue
+
+    # Inserir a função
+    try:
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "funcao"))) # Adjust if the attribute is different
+        input_funcao = driver.find_element(By.NAME, "funcao")  # Ajustar se o atributo for diferente
+        input_funcao.clear()
+        input_funcao.send_keys(funcao)
+        print(f"Função atribuída: {funcao}")
+    except:
+        print(f"❌ Campo de função não encontrado para {nome}")
+        continue
+
+    # Clicar 4x em "Avançar"
+    for i in range(4):
+        try:
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Avançar')]")))
+            botao_avancar = driver.find_element(By.XPATH, "//button[contains(text(), 'Avançar')]")
+            botao_avancar.click()
+            time.sleep(1)
+        except:
+            print(f"⚠️ Botão 'Avançar' não encontrado na etapa {i+1}")
+            break
+
+    # Clicar em "Salvar"
+    try:
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Salvar')]")))
+        botao_salvar = driver.find_element(By.XPATH, "//button[contains(text(), 'Salvar')]")
+        botao_salvar.click()
+        print(f"✅ {nome} atualizado com sucesso!")
+    except:
+        print(f"❌ Erro ao salvar dados de {nome}")
+
+    time.sleep(3)
+
+# === FECHAR NAVEGADOR ===
+driver.quit()
+print("\nProcesso concluído.")
