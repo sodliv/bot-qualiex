@@ -12,7 +12,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 # === CONFIGURAÇÕES DO CHROME PARA COLAB ===
 chrome_options = Options()
-chrome_options.add_argument("--headless")  # Roda sem abrir janela
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.binary_location = "/usr/bin/google-chrome"
@@ -21,52 +20,82 @@ chrome_options.binary_location = "/usr/bin/google-chrome"
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
-# === DADOS DE LOGIN (SUBSTITUIR PELOS REAIS QUANDO TESTAR) ===
-# The authorization URL might not be the direct login page.
-# Let's try navigating to the base login URL first.
-url_base_login = "https://login.qualiex.com/" # Assuming this is the actual login page URL
-# url_login = "https://login.qualiex.com/oauth2/authorize?client_id=132fd610-1947-4827-8414-47b07b355c45&redirect_uri=https:%2F%2Fapps3.qualiex.com%2Fcallback&response_type=token%20id_token&scope=openid%20profile%20email&state=Lw%3D%3D" # Keep the original URL commented
+# === DADOS DE LOGIN ===
+url_login = "https://login.qualiex.com/oauth2/authorize?client_id=132fd610-1947-4827-8414-47b07b355c45&redirect_uri=https:%2F%2Fapps3.qualiex.com%2Fcallback&response_type=token%20id_token&scope=openid%20profile%20email&state=Lw%3D%3D"
 email = "smlima@bundyrefrigeration.com"
 senha = "123@S0l0nqua"
 
 # === ACESSO AO SISTEMA ===
 print("Acessando o sistema...")
-driver.get(url_base_login) # Navigate to the base login URL first
+driver.get(url_login)
 
 # Wait for the email field to be present on the login page
 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "email")))
-print ("Sistema acessado... Seguindo para Login...")
+print("Sistema acessado... Seguindo para Login...")
 
-# === LOGIN ===
+# Printar processo:
+driver.save_screenshot("Site_acessado.png")
+from IPython.display import Image
+Image("Site_acessado.png")
+
+# === LOGIN COM EMAIL===
 print("Fazendo login...")
 driver.find_element(By.NAME, "email").send_keys(email)
-print ("Email Colocado...")
-# 2. Clica no botão "Próximo" após o e-mail
+print("Email Colocado...")
+
+# Clica no botão "Próximo"
 botao_next = WebDriverWait(driver, 10).until(
     EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Next') or contains(., 'Próximo') or @type='submit']"))
 )
 botao_next.click()
 print("Email inserido e botão 'Next' clicado. Seguindo para a senha...")
 
-# Wait for the password field
+# Printar processo:
+driver.save_screenshot("Email_inserido.png")
+Image("Email_inserido.png")
+
+# LOGIN COM SENHA
 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "password")))
 driver.find_element(By.NAME, "password").send_keys(senha)
-print ("Senha também inserida!")
-# 2. Faz o Sign In após colocar a senha
-botao_singin = WebDriverWait(driver, 10).until(
-    EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Sign In') or @type='submit']"))
+print("Senha também inserida!")
+
+# Clica diretamente no botão de login por texto "Sign In"
+botao_signin = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.XPATH, "//button[.//span[text()='Sign In']]"))
 )
-botao_singin.click()
-print("Login realizado com sucesso! Conta", email, "acessada com sucesso.")
+print("✔ Botão 'Sign In' encontrado. Clicando...")
+url_antes = driver.current_url
+driver.execute_script("arguments[0].click();", botao_signin)
 
-time.sleep(10) # Esperar tempinho pq a internet é lenta
+# Espera para possível redirecionamento
+time.sleep(15)
+driver.save_screenshot("pos_signin.png")
+Image("pos_signin.png")
 
-# Now navigate to the staff area after successful login
+# Verifica se tem mensagem de erro visível
+html = driver.page_source
+if "invalid" in html.lower() or "erro" in html.lower():
+    print("⚠️ Ocorreu algum erro visível na página (senha incorreta ou outro problema).")
+else:
+    print("✅ Nenhuma mensagem de erro visível detectada após login.")
+
+# Verifica se a URL mudou
+try:
+    WebDriverWait(driver, 10).until(lambda d: d.current_url != url_antes)
+    print("✔ A URL mudou para:", driver.current_url)
+except:
+    print("❌ A URL não mudou. Login pode ter falhado.")
+
+# Espera um pouco e mostra a URL atual
+time.sleep(10)
+print("🌐 URL atual após login:", driver.current_url)
+
+# Ir p staff
 print("Indo para área Staff...")
 driver.get("https://apps1.qualiex.com/staff")
 time.sleep(10)
 
-# === CARREGAR PLANILHA COM COLABORADORES ===
+# CARREGA PANILHA COM COLABORADORES
 print("Carregando dados da planilha...")
 df = pd.DataFrame({
     "Colaborador": [
