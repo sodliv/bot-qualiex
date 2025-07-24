@@ -1,0 +1,72 @@
+# === IMPORTS ESSENCIAIS ===
+import time
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+import os
+
+# === CONFIGURAÇÕES DO CHROME PARA USO LOCAL ===
+chrome_options = Options()
+chrome_options.add_argument("--start-maximized")  # Abre o navegador maximizado
+# chrome_options.add_argument("--headless")  # Descomente se quiser rodar sem abrir o navegador
+
+# === INICIAR O DRIVER ===
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
+# === DADOS DE LOGIN ===
+url_login = "https://login.qualiex.com/oauth2/authorize?client_id=132fd610-1947-4827-8414-47b07b355c45&redirect_uri=https:%2F%2Fapps3.qualiex.com%2Fcallback&response_type=token%20id_token&scope=openid%20profile%20email&state=Lw%3D%3D"
+email = "smlima@bundyrefrigeration.com"
+senha = "123@S0l0nqua"
+
+# === ACESSO AO SISTEMA ===
+print("Acessando o sistema...")
+driver.get(url_login)
+
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "email")))
+print("Sistema acessado... Seguindo para Login...")
+
+# === LOGIN COM EMAIL===
+print("Fazendo login...")
+driver.find_element(By.NAME, "email").send_keys(email)
+print("Email Colocado...")
+
+botao_next = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Next') or contains(., 'Próximo') or @type='submit']"))
+)
+botao_next.click()
+print("Email inserido e botão 'Next' clicado. Seguindo para a senha...")
+
+# === LOGIN COM SENHA ===
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "password")))
+driver.find_element(By.NAME, "password").send_keys(senha)
+print("Senha também inserida!")
+
+botao_signin = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.XPATH, "//button[.//span[text()='Entrar']]"))
+)
+print("✔ Botão 'Sign In' encontrado. Clicando...")
+url_antes = driver.current_url
+driver.execute_script("arguments[0].click();", botao_signin)
+
+time.sleep(15)
+
+html = driver.page_source
+if "invalid" in html.lower() or "erro" in html.lower():
+    print("⚠️ Erro detectado na página.")
+else:
+    print("✅ Nenhuma mensagem de erro visível detectada após login.")
+
+try:
+    WebDriverWait(driver, 10).until(lambda d: d.current_url != url_antes)
+    print("✔ A URL mudou para:", driver.current_url)
+except:
+    print("❌ A URL não mudou. Login pode ter falhado.")
+
+time.sleep(10)
+print("🌐 URL atual após login:", driver.current_url)
