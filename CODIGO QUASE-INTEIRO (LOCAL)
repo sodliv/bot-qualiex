@@ -1,0 +1,134 @@
+# === IMPORTS ESSENCIAIS ===
+import time
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+import os
+
+# === CONFIGURAÇÕES DO CHROME PARA USO LOCAL ===
+chrome_options = Options()
+chrome_options.add_argument("--start-maximized")  # Abre o navegador maximizado
+# chrome_options.add_argument("--headless")  # Descomente se quiser rodar sem abrir o navegador
+
+# === INICIAR O DRIVER ===
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
+# === DADOS DE LOGIN ===
+url_login = "https://login.qualiex.com/oauth2/authorize?client_id=132fd610-1947-4827-8414-47b07b355c45&redirect_uri=https:%2F%2Fapps3.qualiex.com%2Fcallback&response_type=token%20id_token&scope=openid%20profile%20email&state=Lw%3D%3D"
+email = "smlima@bundyrefrigeration.com"
+senha = "123@S0l0nqua"
+
+# === ACESSO AO SISTEMA ===
+print("Acessando o sistema...")
+driver.get(url_login)
+
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "email")))
+print("Sistema acessado... Seguindo para Login...")
+
+driver.save_screenshot("Site_acessado.png")
+print("🖼 Screenshot salva: Site_acessado.png")
+
+# === LOGIN COM EMAIL===
+print("Fazendo login...")
+driver.find_element(By.NAME, "email").send_keys(email)
+print("Email Colocado...")
+
+botao_next = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Next') or contains(., 'Próximo') or @type='submit']"))
+)
+botao_next.click()
+print("Email inserido e botão 'Next' clicado. Seguindo para a senha...")
+
+driver.save_screenshot("Email_inserido.png")
+print("🖼 Screenshot salva: Email_inserido.png")
+
+# === LOGIN COM SENHA ===
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "password")))
+driver.find_element(By.NAME, "password").send_keys(senha)
+print("Senha também inserida!")
+
+botao_signin = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.XPATH, "//button[.//span[text()='Sign In']]"))
+)
+print("✔ Botão 'Sign In' encontrado. Clicando...")
+url_antes = driver.current_url
+driver.execute_script("arguments[0].click();", botao_signin)
+
+time.sleep(15)
+driver.save_screenshot("pos_signin.png")
+print("🖼 Screenshot salva: pos_signin.png")
+
+html = driver.page_source
+if "invalid" in html.lower() or "erro" in html.lower():
+    print("⚠️ Erro detectado na página.")
+else:
+    print("✅ Nenhuma mensagem de erro visível detectada após login.")
+
+try:
+    WebDriverWait(driver, 10).until(lambda d: d.current_url != url_antes)
+    print("✔ A URL mudou para:", driver.current_url)
+except:
+    print("❌ A URL não mudou. Login pode ter falhado.")
+
+time.sleep(10)
+print("🌐 URL atual após login:", driver.current_url)
+
+# === ACESSANDO STAFF ===
+print("Indo para área Staff...")
+driver.get("https://apps1.qualiex.com/staff")
+time.sleep(15)
+driver.save_screenshot("pos_staff.png")
+print("🖼 Screenshot salva: pos_staff.png")
+
+# === CARREGANDO PLANILHA COM COLABORADORES ===
+print("Carregando dados da planilha...")
+df = pd.DataFrame({
+    "Colaborador": [
+        "Ademir Mendes Nogueira",
+        "Adenilson Carlos Moraes Vieira",
+        "Adriana Shimada Ferreira"
+    ],
+    "Funcao": [
+        "Analista da Qualidade Senior",
+        "Operador Multifuncional Pleno",
+        "Lider de Celula de Producao"
+    ]
+})
+
+# === PROCESSO DE EDIÇÃO DE CADA COLABORADOR ===
+for index, row in df.iterrows():
+    nome = row['Colaborador']
+    funcao = row['Funcao']
+
+    print(f"\nBuscando: {nome}")
+
+    try:
+        print("→ Verificando campo de busca...")
+        campo_busca = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "txtSearch-inputEl"))
+        )
+        campo_busca.clear()
+        campo_busca.send_keys(nome)
+        print("✔ Nome digitado:", nome)
+
+        driver.save_screenshot(f"{nome}_digitado.png")
+        print(f"🖼 Screenshot salva: {nome}_digitado.png")
+
+        botao_lupa = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, "btnSearch-btnIconEl"))
+        )
+        driver.execute_script("arguments[0].click();", botao_lupa)
+        print(f"✔ Buscando perfil de '{nome}'")
+
+        time.sleep(5)
+        driver.save_screenshot(f"{nome}_resultado_busca.png")
+        print(f"🖼 Screenshot salva: {nome}_resultado_busca.png")
+
+    except Exception as e:
+        print(f"❌ Erro ao buscar o colaborador '{nome}': {e}")
