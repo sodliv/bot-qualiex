@@ -31,9 +31,6 @@ driver.get(url_login)
 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "email")))
 print("Sistema acessado... Seguindo para Login...")
 
-driver.save_screenshot("Site_acessado.png")
-print("🖼 Screenshot salva: Site_acessado.png")
-
 # === LOGIN COM EMAIL===
 print("Fazendo login...")
 driver.find_element(By.NAME, "email").send_keys(email)
@@ -45,24 +42,19 @@ botao_next = WebDriverWait(driver, 10).until(
 botao_next.click()
 print("Email inserido e botão 'Next' clicado. Seguindo para a senha...")
 
-driver.save_screenshot("Email_inserido.png")
-print("🖼 Screenshot salva: Email_inserido.png")
-
 # === LOGIN COM SENHA ===
 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "password")))
 driver.find_element(By.NAME, "password").send_keys(senha)
 print("Senha também inserida!")
 
 botao_signin = WebDriverWait(driver, 10).until(
-    EC.element_to_be_clickable((By.XPATH, "//button[.//span[text()='Sign In']]"))
+    EC.element_to_be_clickable((By.XPATH, "//button[.//span[text()='Entrar']]"))
 )
 print("✔ Botão 'Sign In' encontrado. Clicando...")
 url_antes = driver.current_url
 driver.execute_script("arguments[0].click();", botao_signin)
 
-time.sleep(15)
-driver.save_screenshot("pos_signin.png")
-print("🖼 Screenshot salva: pos_signin.png")
+time.sleep(5)
 
 html = driver.page_source
 if "invalid" in html.lower() or "erro" in html.lower():
@@ -76,32 +68,19 @@ try:
 except:
     print("❌ A URL não mudou. Login pode ter falhado.")
 
-time.sleep(10)
+time.sleep(5)
 print("🌐 URL atual após login:", driver.current_url)
 
-# === ACESSANDO STAFF ===
+# indo p staff
 print("Indo para área Staff...")
 driver.get("https://apps1.qualiex.com/staff")
-time.sleep(15)
-driver.save_screenshot("pos_staff.png")
-print("🖼 Screenshot salva: pos_staff.png")
+time.sleep(10)
 
-# === CARREGANDO PLANILHA COM COLABORADORES ===
+# CARREGANDO PLANILHA
 print("Carregando dados da planilha...")
-df = pd.DataFrame({
-    "Colaborador": [
-        "Ademir Mendes Nogueira",
-        "Adenilson Carlos Moraes Vieira",
-        "Adriana Shimada Ferreira"
-    ],
-    "Funcao": [
-        "Analista da Qualidade Senior",
-        "Operador Multifuncional Pleno",
-        "Lider de Celula de Producao"
-    ]
-})
+df = pd.read_excel(r'C:\\Users\\smlima\\Desktop\\relatorio_colaboradores.24.07.2025-13.34.xlsx')
 
-# === PROCESSO DE EDIÇÃO DE CADA COLABORADOR ===
+# PROCESSO DE BUSCA E EDICAO DE CADA COLABORADOR
 for index, row in df.iterrows():
     nome = row['Colaborador']
     funcao = row['Funcao']
@@ -117,9 +96,6 @@ for index, row in df.iterrows():
         campo_busca.send_keys(nome)
         print("✔ Nome digitado:", nome)
 
-        driver.save_screenshot(f"{nome}_digitado.png")
-        print(f"🖼 Screenshot salva: {nome}_digitado.png")
-
         botao_lupa = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.ID, "btnSearch-btnIconEl"))
         )
@@ -127,8 +103,6 @@ for index, row in df.iterrows():
         print(f"✔ Buscando perfil de '{nome}'")
 
         time.sleep(5)
-        driver.save_screenshot(f"{nome}_resultado_busca.png")
-        print(f"🖼 Screenshot salva: {nome}_resultado_busca.png")
 
     except Exception as e:
         print(f"❌ Erro ao buscar o colaborador '{nome}': {e}")
