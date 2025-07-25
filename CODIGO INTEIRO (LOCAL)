@@ -148,7 +148,7 @@ for index, row in df.iterrows():
             time.sleep(1)
 
         time.sleep(1)
-        k.write('Cargo modificado para '{funcao}' conforme pedido por Gerente de RH.')
+        k.write("Cargo modificado para '{funcao}' conforme pedido por Gerente de RH.")
         time.sleep(1)
     
         # clicando no OK final
@@ -158,7 +158,6 @@ for index, row in df.iterrows():
         print(f"✔ Colaborador '{nome}' selecionado com sucesso!")
         time.sleep(3)
 
-        
     except Exception as e:    
         print(f"✔ Passando para o próximo colaborador: {nome}")
         continue  # Avança para o próximo colaborador
