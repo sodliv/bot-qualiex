@@ -148,7 +148,7 @@ for index, row in df.iterrows():
             time.sleep(1)
 
         time.sleep(1)
-        k.write('Cargo modificado para {funcao} conforme pedido por Gerente de RH.')
+        k.write('Cargo modificado para '{funcao}' conforme pedido por Gerente de RH.')
         time.sleep(1)
     
         # clicando no OK final
