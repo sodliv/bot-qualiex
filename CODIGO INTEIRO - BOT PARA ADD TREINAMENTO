@@ -73,13 +73,13 @@ try:
 except:
     print("❌ A URL não mudou. Login pode ter falhado.")
 
-time.sleep(5)
+time.sleep(2)
 print("🌐 URL atual após login:", driver.current_url)
 
 # indo p staff
 print("Indo para área Staff...")
 driver.get("https://apps1.qualiex.com/staff")
-time.sleep(5)
+time.sleep(4)
 
 ###################################################################################################################################################
 
@@ -100,64 +100,67 @@ for index, row in df.iterrows():
 
     try:
         print("→ Verificando campo de busca...")
-        campo_busca = WebDriverWait(driver, 5).until(
+        campo_busca = WebDriverWait(driver, 3).until(
             EC.presence_of_element_located((By.NAME, "txtSearch-inputEl"))
         )
         campo_busca.clear()
         campo_busca.send_keys(nome)
         print(f"✔ Nome '{nome}' digitado na busca.")
 
-        botao_lupa = WebDriverWait(driver, 5).until(
+        botao_lupa = WebDriverWait(driver, 2).until(
             EC.element_to_be_clickable((By.ID, "btnSearch-btnIconEl"))
         )
         driver.execute_script("arguments[0].click();", botao_lupa)
         print(f"✔ Buscando perfil de '{nome}'...")
 
-        time.sleep(5)
+        time.sleep(2)
 
         # clicando no nome do sujeito
         x, y = 412, 305
         selecao = pyautogui.click(x, y)
-        time.sleep(5)
-        print(f"✔ Colaborador '{nome}' selecionado com sucesso!")
+        time.sleep(2)
+        print(f"✔ Colaborador '{nome}' selecionado com sucesso! Prosseguindo...")
 
         # Agora, continua o processo de edição após a seleção ser concluída
-        botao_editar_colaborador = WebDriverWait(driver, 5).until(
+        botao_editar_colaborador = WebDriverWait(driver, 2).until(
             EC.element_to_be_clickable((By.ID, "btnEdit-btnIconEl"))
         )
         driver.execute_script("arguments[0].click();", botao_editar_colaborador)
-        print(f"✔ Editando perfil de '{nome}'")
-        time.sleep(5)
+        print(f"✔ Editando perfil de '{nome}...'")
+        time.sleep(3)
 
         # Agora, vai p aba treinamento
         botao_avancar = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.ID, "btnSaveUser-btnInnerEl"))
+            EC.element_to_be_clickable((By.ID, "btnSaveUser"))
         )
-        driver.execute_script("arguments[0].click();", botao_avancar)
-        time.sleep(1)
+        driver.execute_script("arguments[0].click();", botao_avancar)        
+        print(f"✔ Área de Treinamentos acessada...")
+        time.sleep(3)
         
-        a, b = 428, 3123
+        a, b = 428, 315
         add_treinamento = pyautogui.click(a, b)
         time.sleep(2)
-        k.press_and_release('delete')
-        time.sleep(1)
         k.write(treinamento)
+        time.sleep(1)
         k.press('Tab')
+        time.sleep(1)       
         k.write(local)
+        time.sleep(1)
         k.press('Tab')
-        k.write(data)
+        time.sleep(1)
+        k.write('24/07/2025')
+        time.sleep(1)  
         k.press('Tab')
-        k.write(data)
+        time.sleep(1)
+        k.write('24/07/2025')
+        time.sleep(1)
         k.press('Tab')
-        k.write(horario)
+        time.sleep(1)
+        k.write('2')
+        time.sleep(1)
 
-        print(f"✔ Cargo de '{treinamento}' colocado para {nome} com sucesso!")
+        print(f"✔ Cargo de "'{treinamento}'" colocado para {nome} com sucesso!")
 
-        # agr avança e salva
-        
-        botao_avancar = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.ID, "btnSaveUser-btnInnerEl"))
-        )
         for i in range(3):
             driver.execute_script("arguments[0].click();", botao_avancar)
             time.sleep(1)
