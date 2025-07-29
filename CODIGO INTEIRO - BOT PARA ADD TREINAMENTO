@@ -129,30 +129,27 @@ for index, row in df.iterrows():
         print(f"✔ Editando perfil de '{nome}'")
         time.sleep(5)
 
-        # Agora, bota treinamento
+        # Agora, vai p aba treinamento
         botao_avancar = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.ID, "btnSaveUser-btnInnerEl"))
         )
         driver.execute_script("arguments[0].click();", botao_avancar)
         time.sleep(1)
         
-        botao_colocar_treinamento = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.ID, "button-1127-btnInnerEl"))
-        )
+        a, b = 428, 3123
+        add_treinamento = pyautogui.click(a, b)
+        time.sleep(2)
+        k.press_and_release('delete')
         time.sleep(1)
-        driver.execute_script("arguments[0].click();", botao_colocar_treinamento)
-        time.sleep(1)
-        botao_colocar_treinamento.clear()
-        time.sleep(1)
-        botao_colocar_treinamento.send_keys(treinamento)
+        k.write(treinamento)
         k.press('Tab')
-        botao_colocar_treinamento.send_keys(local)
+        k.write(local)
         k.press('Tab')
-        botao_colocar_treinamento.send_keys(data)
+        k.write(data)
         k.press('Tab')
-        botao_colocar_treinamento.send_keys(data)
+        k.write(data)
         k.press('Tab')
-        botao_colocar_treinamento.send_keys(horario)
+        k.write(horario)
 
         print(f"✔ Cargo de '{treinamento}' colocado para {nome} com sucesso!")
 
