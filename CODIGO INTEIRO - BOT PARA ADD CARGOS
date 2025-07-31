@@ -12,135 +12,148 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import os
-import warnings
-from selenium.webdriver import ActionChains
-warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
-
-###################################################################################################################################################
-
 # config chrome (o abre maximizado)
 chrome_options = Options()
-chrome_options.add_argument("--start-maximized")  # Abre o navegador maximizado
-# chrome_options.add_argument("--headless") = add esta linha se quiser que o processo seja hide
-
-# inicia driver chrome
-service = Service(ChromeDriverManager().install())
+@@ -23,141 +28,119 @@
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
 # variavel pros dados de login
-url_login = "https://www.sccloud.com.br/smartbundy/index.php/S4/dashboard/view"
-usuario = "solon"
-senha = "solon1010"
+url_login = "https://login.qualiex.com/oauth2/authorize?client_id=132fd610-1947-4827-8414-47b07b355c45&redirect_uri=https:%2F%2Fapps3.qualiex.com%2Fcallback&response_type=token%20id_token&scope=openid%20profile%20email&state=Lw%3D%3D"
+email = "smlima@bundyrefrigeration.com"
+senha = "123@S0l0nqua"
 
 ###################################################################################################################################################
 
-# acessa o url do sistema sscloud
-driver.get(url_login)
+# acessa o url do sistema qualiex
 print("Acessando o sistema...")
+driver.get(url_login)
 
-WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "input-9")))
+WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "email")))
 print("Sistema acessado... Seguindo para Login...")
 
-# bota usuario
+# bota email
 print("Fazendo login...")
-teste = driver.find_element(By.ID, "input-9").send_keys(usuario)
-print("Usuario colocado...")
+driver.find_element(By.NAME, "email").send_keys(email)
+print("Email Colocado...")
+
+botao_next = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Next') or contains(., 'Próximo') or @type='submit']"))
+)
+botao_next.click()
+print("Email inserido e botão 'Next' clicado. Seguindo para a senha...")
 
 # bColoca a senha
 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "password")))
-driver.find_element(By.ID, "input-12").send_keys(senha)
-print("Senha também inserida...")
+driver.find_element(By.NAME, "password").send_keys(senha)
+print("Senha também inserida!")
 
-botao_entrar = WebDriverWait(driver, 10).until(
-    EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Entrar') or contains(., ' Entrar ') or @type='submit']"))
+botao_signin = WebDriverWait(driver, 10).until(
+    EC.element_to_be_clickable((By.XPATH, "//button[.//span[text()='Entrar']]"))
 )
+print("✔ Botão 'Sign In' encontrado. Clicando...")
 url_antes = driver.current_url
-driver.execute_script("arguments[0].click();", botao_entrar)
+driver.execute_script("arguments[0].click();", botao_signin)
 
-print("Site acessado com sucesso...")
+time.sleep(5)
 
-time.sleep(2)
+html = driver.page_source
+if "invalid" in html.lower() or "erro" in html.lower():
+    print("⚠️ Erro detectado na página.")
+else:
+    print("✅ Nenhuma mensagem de erro visível detectada após login.")
 
-###################################################################################################################################################
+try:
+    WebDriverWait(driver, 5).until(lambda d: d.current_url != url_antes)
+    print("✔ A URL mudou para:", driver.current_url)
+except:
+    print("❌ A URL não mudou. Login pode ter falhado.")
 
-# indo p ponto
-print("Indo para área de Tratamento de Ponto...")
-driver.get("https://www.sccloud.com.br/smartbundy/index.php/FolhaPonto/tratamentoForm/_OBJ/mod_tratar_marcacoes/_SC_USER/solon")
+time.sleep(5)
+print("🌐 URL atual após login:", driver.current_url)
+
+# indo p staff
+print("Indo para área Staff...")
+driver.get("https://apps1.qualiex.com/staff")
+time.sleep(5)
 
 ###################################################################################################################################################
 
 # exporta os dados da planilha selecionada
 print("Carregando dados da planilha...")
-df = pd.read_excel(r'C:\\Users\\Solon\\OneDrive\\Área de Trabalho\\Matriz entrevista de Absenteísmo222.xlsx')
+df = pd.read_excel(r'C:\\Users\\smlima\\Desktop\\relatorio_colaboradores.24.07.2025-13.34.xlsx')
 
 # busca na planilha pelos titulos de coluna requeridos e por seu respectivo conteudo em loop
-df['Data'] = pd.to_datetime(df['Data'], errors='coerce')  # transforma strings em datetime
+# busca na planilha pelos titulos de coluna requeridos e por seu respectivo conteudo em loop
 
 for index, row in df.iterrows():
-    nome = row['Nome']
+    nome = row['Colaborador']
+    funcao = row['Funcao']
 
-    data = row['Data']
-    if pd.notnull(data):
-        data_str = data.strftime('%d/%m/%Y')
-    else:
-        data_str = ''
-
-    motivo = row['Motivo']
-
-    print(f"\nSelecionando: {data}...")
+    print(f"\nBuscando: {nome}")
 
     try:
-        # (1: Preenchendo a data do atestado)
-        campo_data1 = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.ID, "data_inicial"))
+        print("→ Verificando campo de busca...")
+        campo_busca = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.NAME, "txtSearch-inputEl"))
         )
-        campo_data1.clear()
-        campo_data1.send_keys(data_str)
+        campo_busca.clear()
+        campo_busca.send_keys(nome)
+        print(f"✔ Nome '{nome}' digitado na busca.")
 
-        campo_data2 = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.ID, "data_final"))
+        botao_lupa = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.ID, "btnSearch-btnIconEl"))
         )
-        campo_data2.clear()
-        campo_data2.send_keys(data_str)
+        driver.execute_script("arguments[0].click();", botao_lupa)
+        print(f"✔ Buscando perfil de '{nome}'...")
 
-        print(f"✔ Registro do dia '{data}' conforme prescrito no devido atestado selecionado! Prosseguindo...")
+        time.sleep(5)
 
-        # (2: Preenchendo o nome do colaborador)
-        campo_filtro = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.ID, '_colaborador_filtro'))
+        # clicando no nome do sujeito
+        x, y = 412, 305
+        selecao = pyautogui.click(x, y)
+        time.sleep(5)
+        print(f"✔ Colaborador '{nome}' selecionado com sucesso!")
+
+        # Agora, continua o processo de edição após a seleção ser concluída
+        botao_editar_colaborador = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.ID, "btnEdit-btnIconEl"))
         )
-        campo_filtro.clear()
-        campo_filtro.send_keys(nome)
-        print(f"✔ Colaborador '{nome}' também selecionado com sucesso! Ainda prosseguindo...")
+        driver.execute_script("arguments[0].click();", botao_editar_colaborador)
+        print(f"✔ Editando perfil de '{nome}'")
+        time.sleep(5)
 
-        # (3: Apertando botão para seleção de colaborador)
-        botao_pesquisar = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.XPATH, '//*[@id="pesquisar"]/input'))
+        # Agora, bota cargo
+        botao_colocar_cargo = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.ID, "cboRole-inputEl"))
         )
-        actions = ActionChains(driver)
-        actions.move_to_element(botao_pesquisar).click().perform()
-        time.sleep(2)
+        time.sleep(1)
+        driver.execute_script("arguments[0].click();", botao_colocar_cargo)
+        time.sleep(1)
+        botao_colocar_cargo.clear()
+        time.sleep(1)
+        botao_colocar_cargo.send_keys(funcao)
+        print(f"✔ Cargo de '{funcao}' colocado para {nome} com sucesso!")
 
-        # (4: Clicando em "Lancar atestados/ausencias)
-        s, c = 503, 803
-        botao_lancar = pyautogui.click(s, c)
+        # agr avança e salva
 
-        # (5: Lançando data do atestado em questão)
-        
-        # Primeiro campo:
-        campo_data_dentro1 = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="data_inicial_afastamento"]'))
+        botao_avancar = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.ID, "btnSaveUser-btnInnerEl"))
         )
-        driver.execute_script("arguments[0].click();", campo_data_dentro1)
-        k.write(data)
-        # Segundo campo:
-        campo_data_dentro2 = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="data_final_afastamento"]'))
-        )
-        driver.execute_script("arguments[0].click();", campo_data_dentro2)
-        k.write(data)
+        for i in range(4):
+            driver.execute_script("arguments[0].click();", botao_avancar)
+            time.sleep(1)
 
-        time.sleep(60)
+        time.sleep(1)
+        k.write("Cargo modificado para '{funcao}' conforme pedido por Gerente de RH.")
+        time.sleep(1)
+    
+        # clicando no OK final
+        x2, y2 = 806, 563
+        selecao_2 = pyautogui.click(x2, y2)
+        time.sleep(1)
+        print(f"✔ Colaborador '{nome}' selecionado com sucesso!")
+        time.sleep(3)
 
-    except Exception as e:
-            print(f"✔ Erro: {e}")
+    except Exception as e:    
+        print(f"✔ Passando para o próximo colaborador: {nome}")
+        continue  # Avança para o próximo colaborador
