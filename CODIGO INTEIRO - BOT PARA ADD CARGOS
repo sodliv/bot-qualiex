@@ -14,7 +14,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 import os
 # config chrome (o abre maximizado)
 chrome_options = Options()
-@@ -23,141 +28,119 @@
 driver = webdriver.Chrome(service=service, options=chrome_options)
 
 # variavel pros dados de login
